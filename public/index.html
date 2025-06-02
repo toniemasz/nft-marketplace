@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>NFT Marketplace</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 600px;
+      margin: 30px auto;
+      text-align: center;
+    }
+    nav button {
+      padding: 10px;
+      margin: 5px;
+      cursor: pointer;
+    }
+    section {
+      display: none;
+      margin-top: 20px;
+    }
+    section.active {
+      display: block;
+    }
+    img {
+      max-width: 100%;
+      margin: 10px 0;
+    }
+    .nft-card {
+      border: 1px solid #ccc;
+      padding: 10px;
+      margin-bottom: 15px;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>🖼 NFT Marketplace</h1>
+
+  <nav>
+    <button onclick="showTab('create')">Wystaw NFT</button>
+    <button onclick="showTab('market')">Kup NFT</button>
+    <button onclick="showTab('owned')">Mój portfel</button>
+  </nav>
+
+  <!-- Wystaw NFT -->
+  <section id="create" class="active">
+    <h2>Wystaw NFT</h2>
+    <form id="uploadForm">
+      <input type="file" name="image" required /><br>
+      <input type="text" name="price" placeholder="Cena w ETH" required /><br>
+      <button type="submit">Wystaw</button>
+    </form>
+    <div id="create-message"></div>
+    <img id="create-preview" style="display:none;" />
+  </section>
+
+  <!-- Kup NFT -->
+  <section id="market">
+    <h2>Dostępne NFT</h2>
+    <div id="market-list">Ładowanie...</div>
+  </section>
+
+  <!-- Mój portfel -->
+  <section id="owned">
+    <h2>Moje NFT</h2>
+    <div id="owned-list">Ładowanie...</div>
+  </section>
+
+  <script>
+    function showTab(tab) {
+      document.querySelectorAll("section").forEach(s => s.classList.remove("active"));
+      document.getElementById(tab).classList.add("active");
+      if (tab === "market") loadMarket();
+      if (tab === "owned") loadOwned();
+    }
+
+    document.getElementById("uploadForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const formData = new FormData(e.target);
+      const res = await fetch("/upload", { method: "POST", body: formData });
+      const data = await res.json();
+      const msg = document.getElementById("create-message");
+      const preview = document.getElementById("create-preview");
+      if (data.success) {
+        msg.innerText = "NFT wystawione!";
+        preview.src = data.imageUrl;
+        preview.style.display = "block";
+      } else {
+        msg.innerText = "Błąd: " + data.error;
+      }
+    });
+
+    async function loadMarket() {
+      const res = await fetch("/nfts");
+      const data = await res.json();
+      const container = document.getElementById("market-list");
+      container.innerHTML = "";
+      data.nfts.filter(n => !n.sold).forEach(nft => {
+        const div = document.createElement("div");
+        div.className = "nft-card";
+        div.innerHTML = `
+          <img src="${nft.imageUrl}" />
+          <p>Cena: ${nft.price} ETH</p>
+          <button onclick="buyNFT(${nft.id})">Kup</button>
+        `;
+        container.appendChild(div);
+      });
+    }
+
+    async function buyNFT(id) {
+      const res = await fetch("/buy", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id })
+      });
+      const data = await res.json();
+      if (data.success) {
+        alert("Kupiono NFT!");
+        loadMarket();
+        loadOwned();
+      } else {
+        alert("Błąd: " + data.error);
+      }
+    }
+
+    async function loadOwned() {
+      const res = await fetch("/owned");
+      const data = await res.json();
+      const container = document.getElementById("owned-list");
+      container.innerHTML = "";
+      data.owned.forEach(nft => {
+        const div = document.createElement("div");
+        div.className = "nft-card";
+        div.innerHTML = `
+          <img src="${nft.imageUrl}" />
+          <p>Kupione za: ${nft.price} ETH</p>
+        `;
+        container.appendChild(div);
+      });
+    }
+  </script>
+</body>
+</html>
