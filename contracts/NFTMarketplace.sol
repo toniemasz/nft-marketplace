@@ -40,4 +40,16 @@ contract NFTMarketplace {
     function getItem(uint _id) public view returns (Item memory) {
         return items[_id];
     }
+
+    function resellItem(uint _id, uint _newPrice) public {
+    Item storage item = items[_id];
+    require(msg.sender == item.owner, "You are not the owner");
+    require(item.sold == true, "NFT is already listed");
+
+    item.sold = false;
+    item.price = _newPrice;
+}
+
+
+
 }

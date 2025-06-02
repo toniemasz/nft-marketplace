@@ -1,0 +1,25 @@
+{
+  "users": [
+    {
+      "id": "user2",
+      "address": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+      "privateKey": "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80",
+      "balance": 13599,
+      "ownedNFTs": [
+        4,
+        5,
+        6
+      ]
+    },
+    {
+      "id": "user1",
+      "address": "0x48fb8e0910c091fc0d16c3cec339434dd2ee12ef",
+      "privateKey": "0x7043402bf2c936ccec0340e0c1d94f583b7e116c9567bb15557be94ffed2e9c4",
+      "balance": 6401,
+      "ownedNFTs": [
+        7,
+        1
+      ]
+    }
+  ]
+}
