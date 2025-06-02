@@ -103,6 +103,31 @@ app.get("/owned", async (req, res) => {
     res.status(500).json({ success: false, error: err.message });
   }
 });
+app.get("/history", async (req, res) => {
+  try {
+    const filter = contract.filters.ItemPurchased();
+    const events = await contract.queryFilter(filter, 0, "latest");
+
+    const enriched = await Promise.all(events.map(async (e) => {
+      const item = await contract.getItem(e.args.id);
+      return {
+        id: Number(e.args.id),
+        imageUrl: item.imageUrl,
+        buyer: e.args.newOwner,
+        price: ethers.formatEther(item.price),
+        timestamp: (await e.getBlock()).timestamp
+      };
+    }));
+
+    // sortujemy od najnowszego
+    enriched.sort((a, b) => b.timestamp - a.timestamp);
+
+    res.json({ success: true, history: enriched });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
 
 // Start serwera
 app.listen(3000, () => console.log("Server running on http://localhost:3000"));
