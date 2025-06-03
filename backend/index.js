@@ -22,7 +22,7 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage });
 
-app.use("/api/nft", upload.single("image"), nftRoutes);
+app.use("/api", upload.single("image"), nftRoutes);
 
 app.get("/", (req, res) => {
   res.sendFile(path.join(FRONTEND_DIR, "index.html"));

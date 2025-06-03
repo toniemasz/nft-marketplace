@@ -1,28 +1,31 @@
 const fs = require("fs");
-const path = require("path");
 const { ethers } = require("ethers");
 const {
   nftContract,
   marketplaceContract,
-  wallet,
   nftAddress,
   marketplaceAddress
 } = require("../utils/blockchain");
 
+const { getUserWallet } = require("../utils/getUserWallet");
+
 // ✅ Mint NFT
 const mintNFT = async (req, res) => {
   try {
-    const { name, description, userAddress } = req.body;
+    const { name, description, username } = req.body;
+    const userWallet = getUserWallet(username);
+    const userAddress = userWallet.address;
 
     if (!ethers.isAddress(userAddress)) {
       return res.status(400).json({ success: false, error: "Niepoprawny adres Ethereum" });
     }
 
+    const connectedNFT = nftContract.connect(userWallet);
     const imageUrl = `${req.protocol}://${req.get("host")}/uploads/${req.file.filename}`;
     const metadata = { name, description, image: imageUrl };
     const tokenURI = JSON.stringify(metadata);
 
-    const tx = await nftContract.mintNFT(userAddress, tokenURI);
+    const tx = await connectedNFT.mintNFT(userAddress, tokenURI);
     const receipt = await tx.wait();
     const tokenId = receipt.logs[0].args[2].toString();
 
@@ -36,11 +39,20 @@ const mintNFT = async (req, res) => {
 // ✅ Wystaw NFT
 const listNFT = async (req, res) => {
   try {
-    const { tokenId, price } = req.body;
-    const weiPrice = ethers.parseEther(price);
+    const { tokenId, price, username } = req.body;
+    const userWallet = getUserWallet(username);
+    const userAddress = userWallet.address;
 
-    await nftContract.approve(marketplaceAddress, tokenId);
-    const tx = await marketplaceContract.listItem(nftAddress, tokenId, weiPrice);
+    if (!ethers.isAddress(userAddress)) {
+      return res.status(400).json({ success: false, error: "Niepoprawny adres Ethereum" });
+    }
+
+    const weiPrice = ethers.parseEther(price);
+    const connectedNFT = nftContract.connect(userWallet);
+    const connectedMarketplace = marketplaceContract.connect(userWallet);
+
+    await connectedNFT.approve(marketplaceAddress, tokenId);
+    const tx = await connectedMarketplace.listItem(nftAddress, tokenId, weiPrice);
     await tx.wait();
 
     res.json({ success: true, tokenId, price });
@@ -53,10 +65,18 @@ const listNFT = async (req, res) => {
 // ✅ Kup NFT
 const buyNFT = async (req, res) => {
   try {
-    const { listingId } = req.body;
-    const listing = await marketplaceContract.getListing(listingId);
+    const { listingId, username } = req.body;
+    const userWallet = getUserWallet(username);
+    const userAddress = userWallet.address;
 
-    const tx = await marketplaceContract.buyItem(listingId, {
+    if (!ethers.isAddress(userAddress)) {
+      return res.status(400).json({ success: false, error: "Niepoprawny adres Ethereum" });
+    }
+
+    const listing = await marketplaceContract.getListing(listingId);
+    const connectedMarketplace = marketplaceContract.connect(userWallet);
+
+    const tx = await connectedMarketplace.buyItem(listingId, {
       value: listing.price
     });
     await tx.wait();
@@ -117,7 +137,7 @@ const getUserNFTs = async (req, res) => {
 
       let metadata;
       try {
-        metadata = JSON.parse(tokenUri); // Zakładamy że tokenURI to zakodowany JSON
+        metadata = JSON.parse(tokenUri);
       } catch (e) {
         metadata = { name: "Nieznany", description: "", image: "" };
       }
@@ -134,8 +154,6 @@ const getUserNFTs = async (req, res) => {
     res.status(500).json({ success: false, error: err.message });
   }
 };
-
-
 
 module.exports = {
   mintNFT,
