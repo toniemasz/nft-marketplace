@@ -95,16 +95,19 @@ app.post("/buy", async (req, res) => {
       return res.status(400).json({ success: false, error: "NFT już zostało sprzedane" });
     }
 
-    const users = JSON.parse(fs.readFileSync(usersFile));
-    const buyer = users.users.find(u => u.id === userId);
-    const seller = users.users.find(u => u.address.toLowerCase() === item.owner.toLowerCase());
+  const users = JSON.parse(fs.readFileSync(usersFile));
+  const buyer = users.users.find(u => u.id === userId);
+  const seller = users.users.find(u => u.ownedNFTs.includes(Number(id)));
 
     const price = Number(ethers.formatEther(item.price));
 
     if (!buyer || buyer.balance < price) {
       return res.status(400).json({ success: false, error: "Brak środków" });
     }
-
+    const backendBalance = await provider.getBalance(wallet.address);
+    if (backendBalance < item.price) {
+      return res.status(400).json({ success: false, error: "Backend wallet ma za mało środków" });
+    }
     // Transakcja blockchain
     const tx = await contract.purchaseItem(id, { value: item.price });
     await tx.wait();
@@ -144,7 +147,7 @@ app.get("/owned", async (req, res) => {
 
   try {
     const users = JSON.parse(fs.readFileSync(usersFile));
-    const user = users.users.find(u => u.id === userId);
+      const user = users.users.find(u => u.id === userId);
 
     if (!user) {
       return res.status(404).json({ success: false, error: "Użytkownik nie znaleziony" });
@@ -243,12 +246,15 @@ app.get("/profile/:userId", async (req, res) => {
       }
     }
 
-    res.json({
+    const onChainBalance = await provider.getBalance(wallet.address);
+      res.json({
       success: true,
       user: {
         id: user.id,
         address: user.address,
+        address: wallet.address,
         balance: user.balance,
+        walletBalance: ethers.formatEther(onChainBalance),
         ownedNFTs: owned
       }
     });

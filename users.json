@@ -4,22 +4,48 @@
       "id": "user2",
       "address": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
       "privateKey": "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80",
-      "balance": 13599,
+      "balance": 14699,
       "ownedNFTs": [
         4,
         5,
-        6
+        6,
+        2,
+        3
       ]
     },
     {
       "id": "user1",
       "address": "0x48fb8e0910c091fc0d16c3cec339434dd2ee12ef",
       "privateKey": "0x7043402bf2c936ccec0340e0c1d94f583b7e116c9567bb15557be94ffed2e9c4",
-      "balance": 6401,
+      "balance": 4401,
       "ownedNFTs": [
         7,
+        2,
         1
       ]
+    },
+    {
+      "id": "user11",
+      "address": "0x84039041033c9c812b753eed4000df5cac2cc412",
+      "privateKey": "0xe59d621bbd7f460be180268844b650a5dcac34593c0192d65cc4bfbf85c9404f",
+      "balance": 9900,
+      "ownedNFTs": [
+        1
+      ]
+    },
+    {
+      "id": "user3",
+      "address": "0x3ae21275c0ea35d6af76e8cad5d3a8a418a76573",
+      "privateKey": "0xb66f9361fb5ad5ccedb47499a6acaf21a0a61bb8df06349e9512e7a01a1c358b",
+      "balance": 10000,
+      "ownedNFTs": []
+    },
+    {
+      "id": "user0",
+      "address": "0x37bf0f42ae624dff540a0fb1fbdc8a5692745b33",
+      "privateKey": "0xfc7cdf9ec5ad4e73f95c4a1a451576c26076a8d263535fb84661a96e2dc2c067",
+      "balance": 10000,
+      "ownedNFTs": []
     }
   ]
 }

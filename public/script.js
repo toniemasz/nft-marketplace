@@ -34,9 +34,10 @@ async function loadProfile() {
 
   const res = await fetch(`/profile/${userId}`);
   const data = await res.json();
-    console.log("PROFILE:", data); 
+  console.log("PROFILE:", data); 
   if (data.success) {
-    document.getElementById("balance").innerText = Number(data.user.balance).toFixed(2);
+    const bal = data.user.walletBalance || data.user.balance;
+    document.getElementById("balance").innerText = Number(bal).toFixed(2);
   }
 }
 
@@ -109,7 +110,8 @@ async function loadOwned() {
   });
 
   // Zaktualizuj saldo
-  document.getElementById("balance").innerText = data.user.balance;
+  const bal = data.user.walletBalance || data.user.balance;
+  document.getElementById("balance").innerText = Number(bal).toFixed(2);
 }
 
 
