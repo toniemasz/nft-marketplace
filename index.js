@@ -65,7 +65,7 @@ app.post("/upload", upload.single("image"), async (req, res) => {
 // 📦 Wszystkie NFT
 app.get("/nfts", async (req, res) => {
   try {
-    const itemCount = await contract.itemCount();
+    const itemCount = Number(await contract.itemCount());
     const nfts = [];
     for (let i = 1; i <= itemCount; i++) {
       const item = await contract.getItem(i);
@@ -150,7 +150,7 @@ app.get("/owned", async (req, res) => {
       return res.status(404).json({ success: false, error: "Użytkownik nie znaleziony" });
     }
 
-    const itemCount = await contract.itemCount();
+    const itemCount = Number(await contract.itemCount());
     const owned = [];
 
     for (let i = 1; i <= itemCount; i++) {
@@ -229,7 +229,7 @@ app.get("/profile/:userId", async (req, res) => {
 
     // Pobieramy NFT z kontraktu
     const owned = [];
-    const itemCount = await contract.itemCount();
+    const itemCount = Number(await contract.itemCount());
 
     for (let i = 1; i <= itemCount; i++) {
       const item = await contract.getItem(i);
