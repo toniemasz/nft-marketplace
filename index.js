@@ -11,6 +11,11 @@ app.use(express.static("public"));
 app.use("/uploads", express.static("uploads"));
 app.use(express.json());
 
+// Upewnij się, że katalog uploads istnieje
+if (!fs.existsSync("uploads")) {
+  fs.mkdirSync("uploads");
+}
+
 const usersFile = "./users.json";
 
 // Multer - zapis do katalogu uploads/
@@ -58,7 +63,8 @@ app.post("/upload", upload.single("image"), async (req, res) => {
     res.json({ success: true, imageUrl: `http://localhost:3000${filePath}` });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ success: false, error: err.message });
+    const message = err.message || "Błąd połączenia z blockchainem";
+    res.status(500).json({ success: false, error: message });
   }
 });
 

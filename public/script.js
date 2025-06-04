@@ -173,15 +173,19 @@ window.addEventListener("DOMContentLoaded", () => {
 document.getElementById("uploadForm").addEventListener("submit", async (e) => {
   e.preventDefault();
   const formData = new FormData(e.target);
-  const res = await fetch("/upload", { method: "POST", body: formData });
-  const data = await res.json();
   const msg = document.getElementById("create-message");
   const preview = document.getElementById("create-preview");
-  if (data.success) {
-    msg.innerText = "NFT wystawione!";
-    preview.src = data.imageUrl;
-    preview.style.display = "block";
-  } else {
-    msg.innerText = "Błąd: " + data.error;
+  try {
+    const res = await fetch("/upload", { method: "POST", body: formData });
+    const data = await res.json();
+    if (data.success) {
+      msg.innerText = "NFT wystawione!";
+      preview.src = data.imageUrl;
+      preview.style.display = "block";
+    } else {
+      msg.innerText = "Błąd: " + data.error;
+    }
+  } catch (err) {
+    msg.innerText = "Błąd połączenia z serwerem";
   }
 });
