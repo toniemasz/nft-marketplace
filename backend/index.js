@@ -6,7 +6,8 @@ const multer = require("multer");
 require("dotenv").config();
 
 const nftRoutes = require("./routes/nftRoutes");
-const FRONTEND_DIR = path.join(__dirname, "../frontend");
+// Serve the same frontend as the root server
+const FRONTEND_DIR = path.join(__dirname, "../public");
 
 const app = express();
 const PORT = 3001;
