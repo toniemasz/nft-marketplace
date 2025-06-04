@@ -18,7 +18,16 @@ const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, "uploads/"),
   filename: (req, file, cb) => cb(null, Date.now() + "_" + file.originalname)
 });
-const upload = multer({ storage });
+const upload = multer({
+  storage,
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype === "image/png" || file.mimetype === "image/jpeg") {
+      cb(null, true);
+    } else {
+      cb(new Error("Invalid file type"));
+    }
+  }
+});
 
 // Ethers + kontrakt
 const provider = new ethers.JsonRpcProvider("http://localhost:8545");
@@ -49,17 +58,25 @@ app.post("/login", (req, res) => {
 });
 
 // 📤 Upload NFT
-app.post("/upload", upload.single("image"), async (req, res) => {
-  try {
-    const price = req.body.price;
-    const filePath = "/uploads/" + req.file.filename;
-    const tx = await contract.createItem(`http://localhost:3000${filePath}`, ethers.parseEther(price));
-    await tx.wait();
-    res.json({ success: true, imageUrl: `http://localhost:3000${filePath}` });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ success: false, error: err.message });
-  }
+app.post("/upload", (req, res) => {
+  upload.single("image")(req, res, async err => {
+    if (err) {
+      const message = err.message === "Invalid file type" ?
+        "Only JPEG and PNG images are allowed" : err.message;
+      return res.status(400).json({ success: false, error: message });
+    }
+
+    try {
+      const price = req.body.price;
+      const filePath = "/uploads/" + req.file.filename;
+      const tx = await contract.createItem(`http://localhost:3000${filePath}`, ethers.parseEther(price));
+      await tx.wait();
+      res.json({ success: true, imageUrl: `http://localhost:3000${filePath}` });
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ success: false, error: err.message });
+    }
+  });
 });
 
 // 📦 Wszystkie NFT
