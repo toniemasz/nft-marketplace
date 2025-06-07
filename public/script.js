@@ -1,3 +1,11 @@
+
+const nftAddress = "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512";
+const marketAddress = "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0";
+
+
+
+
+
 function showTab(tab) {
   document.querySelectorAll("section").forEach(s => s.classList.remove("active"));
   document.getElementById(tab).classList.add("active");
@@ -7,39 +15,30 @@ function showTab(tab) {
   if (tab === "history") loadHistory();
 }
 
-async function login() {
-  const userId = document.getElementById("userIdInput").value.trim();
-  if (!userId) return alert("Podaj nazwę użytkownika");
+let currentAccount;
 
-  const res = await fetch("/login", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ userId })
-  });
+async function connectMetaMask() {
+  if (window.ethereum) {
+    try {
+      const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+      currentAccount = accounts[0];
+      document.getElementById("accountAddress").innerText = currentAccount;
 
-  const data = await res.json();
-
-  if (data.success) {
-    localStorage.setItem("userId", userId);
-    document.getElementById("loginStatus").innerText = `Zalogowano jako ${userId}`;
-    loadProfile();
+      // Załaduj saldo konta
+      const provider = new ethers.providers.Web3Provider(window.ethereum);
+      const balance = await provider.getBalance(currentAccount);
+      const ethBalance = ethers.utils.formatEther(balance);
+      document.getElementById("balance").innerText = parseFloat(ethBalance).toFixed(4);
+    } catch (err) {
+      console.error("MetaMask connection error:", err);
+      alert("Błąd połączenia z MetaMask");
+    }
   } else {
-    document.getElementById("loginStatus").innerText = "Błąd logowania";
+    alert("MetaMask nie jest zainstalowany. Zainstaluj rozszerzenie w przeglądarce.");
   }
 }
 
-async function loadProfile() {
-  const userId = localStorage.getItem("userId");
-  if (!userId) return;
-
-  const res = await fetch(`/profile/${userId}`);
-  const data = await res.json();
-  console.log("PROFILE:", data); 
-  if (data.success) {
-    const bal = data.user.walletBalance || data.user.balance;
-    document.getElementById("balance").innerText = Number(bal).toFixed(2);
-  }
-}
+document.getElementById("connectButton").addEventListener("click", connectMetaMask);
 
 async function loadMarket() {
   const res = await fetch("/nfts");
@@ -60,8 +59,9 @@ async function loadMarket() {
 }
 
 async function buyNFT(id) {
-  const userId = localStorage.getItem("userId");
-  if (!userId) return alert("Musisz być zalogowany");
+  //const userId = localStorage.getItem("userId");
+  if (!currentAccount) return alert("Najpierw połącz MetaMask");
+  //if (!userId) return alert("Musisz być zalogowany");
 
   const res = await fetch("/buy", {
     method: "POST",
@@ -81,7 +81,8 @@ async function buyNFT(id) {
 }
 
 async function loadOwned() {
-  const userId = localStorage.getItem("userId");
+  //const userId = localStorage.getItem("userId");
+  if (!currentAccount) return alert("Najpierw połącz MetaMask");
   const res = await fetch(`/profile/${userId}`);
   const data = await res.json();
   const container = document.getElementById("owned-list");
@@ -116,7 +117,8 @@ async function loadOwned() {
 
 
 async function resellNFT(id) {
-  const userId = localStorage.getItem("userId");
+  //const userId = localStorage.getItem("userId");
+  if (!currentAccount) return alert("Najpierw połącz MetaMask");
   const price = document.getElementById(`resell-price-${id}`).value;
 
   if (!price) return alert("Podaj cenę!");
@@ -124,7 +126,7 @@ async function resellNFT(id) {
   const res = await fetch("/resell", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ userId, id, price })
+    body: JSON.stringify({ userId: currentAccount, id, price })
   });
 
   const data = await res.json();
@@ -163,18 +165,24 @@ async function loadHistory() {
   });
 }
 
-window.addEventListener("DOMContentLoaded", () => {
-  const userId = localStorage.getItem("userId");
-  if (userId) {
-    document.getElementById("userIdInput").value = userId;
-    document.getElementById("loginStatus").innerText = `Zalogowano jako ${userId}`;
-    loadProfile();
-  }
-});
+
 
 document.getElementById("uploadForm").addEventListener("submit", async (e) => {
   e.preventDefault();
   const formData = new FormData(e.target);
+
+
+
+
+
+//dodaje cene z inputa 
+  const price = document.getElementById("nftPrice").value;
+  formData.append("price", price);
+
+
+
+
+
   const res = await fetch("/upload", { method: "POST", body: formData });
   const data = await res.json();
   const msg = document.getElementById("create-message");

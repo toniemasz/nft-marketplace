@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!-- <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -45,15 +45,13 @@
     <button onclick="showTab('history')">🧾 Historia</button>
     
   </nav>
-  <p>Stan konta: <span id="balance"></span> ETH</p>
-  <div id="loginSection">
-    <h2>Zaloguj się</h2>
-    <input type="text" id="userIdInput" placeholder="Twoja nazwa użytkownika">
-    <button onclick="login()">Zaloguj się</button>
-    <p id="loginStatus"></p>
-    </div>
 
-  <!-- Wystaw NFT -->
+  METAMASK -->
+  <!-- <p>Stan konta: <span id="balance"></span> ETH</p>
+<button id="connectButton">🔌 Połącz z MetaMask</button>
+<p>Połączono z: <span id="accountAddress">Brak</span></p>
+
+  Wystaw NFT 
   <section id="create" class="active">
     <h2>Wystaw NFT</h2>
     <form id="uploadForm">
@@ -65,13 +63,13 @@
     <img id="create-preview" style="display:none;" />
   </section>
 
-  <!-- Kup NFT -->
+   Kup NFT 
   <section id="market">
     <h2>Dostępne NFT</h2>
     <div id="market-list">Ładowanie...</div>
   </section>
 
-  <!-- Mój portfel -->
+   Mój portfel 
   <section id="owned">
     <h2>Moje NFT</h2>
     <div id="owned-list">Ładowanie...</div>
@@ -81,5 +79,393 @@
   <h2>Historia zakupów</h2>
   <div id="history-list">Ładowanie...</div>
 </section>
+</body>
+</html> -->
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>NFT Marketplace</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
+  <script defer src="script.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 30px auto;
+      text-align: center;
+      padding: 20px;
+    }
+    nav button {
+      padding: 10px 15px;
+      margin: 5px;
+      cursor: pointer;
+      background: #007bff;
+      color: white;
+      border: none;
+      border-radius: 5px;
+    }
+    nav button:hover {
+      background: #0056b3;
+    }
+    section {
+      display: none;
+      margin-top: 20px;
+      text-align: left;
+    }
+    section.active {
+      display: block;
+    }
+    img {
+      max-width: 200px;
+      height: 200px;
+      object-fit: cover;
+      margin: 10px 0;
+    }
+    .nft-card {
+      border: 1px solid #ccc;
+      padding: 15px;
+      margin-bottom: 15px;
+      border-radius: 5px;
+      background: #f9f9f9;
+    }
+    .wallet-info {
+      background: #e9ecef;
+      padding: 15px;
+      border-radius: 5px;
+      margin: 20px 0;
+    }
+    input, button {
+      padding: 8px 12px;
+      margin: 5px;
+      border: 1px solid #ccc;
+      border-radius: 3px;
+    }
+    button {
+      background: #28a745;
+      color: white;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #218838;
+    }
+    .error {
+      color: red;
+      margin: 10px 0;
+    }
+    .success {
+      color: green;
+      margin: 10px 0;
+    }
+  </style>
+</head>
+<body>
+  <h1>🖼 NFT Marketplace</h1>
+  
+  <!-- Wallet Connection -->
+  <div class="wallet-info">
+    <button id="connectButton">🔌 Connect MetaMask</button>
+    <div id="walletInfo" style="display: none;">
+      <p>Account: <span id="accountAddress"></span></p>
+      <p>Balance: <span id="balance"></span> ETH</p>
+    </div>
+  </div>
+
+  <nav>
+    <button onclick="showTab('create')">Create NFT</button>
+    <button onclick="showTab('market')">Marketplace</button>
+    <button onclick="showTab('owned')">My NFTs</button>
+  </nav>
+
+  <!-- Create NFT -->
+  <section id="create" class="active">
+    <h2>Create NFT</h2>
+    <form id="uploadForm">
+      <input type="file" name="image" accept="image/*" required /><br><br>
+      <input type="text" name="price" id="nftPrice" placeholder="Price in ETH" required /><br><br>
+      <button type="submit">Create & List NFT</button>
+    </form>
+    <div id="create-message"></div>
+    <img id="create-preview" style="display:none;" />
+  </section>
+
+  <!-- Marketplace -->
+  <section id="market">
+    <h2>Available NFTs</h2>
+    <button onclick="loadMarket()">Refresh Marketplace</button>
+    <div id="market-list">Click refresh to load NFTs...</div>
+  </section>
+
+  <!-- My NFTs -->
+  <section id="owned">
+    <h2>My NFTs</h2>
+    <button onclick="loadOwned()">Refresh My NFTs</button>
+    <div id="owned-list">Click refresh to load your NFTs...</div>
+  </section>
+
+  <script>
+    // Contract addresses - will be loaded from backend
+    let nftAddress = "";
+    let marketAddress = "";
+    let currentAccount = "";
+    let provider = null;
+    let signer = null;
+
+    // ABIs
+    const NFT_ABI = [
+      "function mint(string memory _tokenURI) public",
+      "function nextTokenId() public view returns (uint)",
+      "function ownerOf(uint tokenId) public view returns (address)",
+      "function tokenURI(uint tokenId) public view returns (string)",
+      "function approve(address to, uint tokenId) public"
+    ];
+
+    const MARKETPLACE_ABI = [
+      "function listNFT(address _nftContract, uint _tokenId, uint _price) public",
+      "function buyNFT(uint _listingId) public payable",
+      "function getAllListings() public view returns (tuple(address seller, address nftContract, uint tokenId, uint price, bool sold)[])",
+      "function getListing(uint _id) public view returns (tuple(address seller, address nftContract, uint tokenId, uint price, bool sold))",
+      "function getMyPurchases() public view returns (uint[])",
+      "event NFTListed(uint listingId, address seller, address nftContract, uint tokenId, uint price)",
+      "event NFTSold(uint listingId, address buyer)"
+    ];
+
+    // Load contract addresses
+    async function loadAddresses() {
+      try {
+        const response = await fetch('/addresses');
+        const data = await response.json();
+        nftAddress = data.nftAddress;
+        marketAddress = data.marketplaceAddress;
+        console.log('Contract addresses loaded:', data);
+      } catch (error) {
+        console.error('Error loading addresses:', error);
+      }
+    }
+
+    // Show tab function
+    function showTab(tab) {
+      document.querySelectorAll("section").forEach(s => s.classList.remove("active"));
+      document.getElementById(tab).classList.add("active");
+    }
+
+    // Connect MetaMask
+    async function connectMetaMask() {
+      if (window.ethereum) {
+        try {
+          const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+          currentAccount = accounts[0];
+          provider = new ethers.providers.Web3Provider(window.ethereum);
+          signer = provider.getSigner();
+          
+          document.getElementById("accountAddress").innerText = currentAccount;
+          
+          // Load balance
+          const balance = await provider.getBalance(currentAccount);
+          const ethBalance = ethers.utils.formatEther(balance);
+          document.getElementById("balance").innerText = parseFloat(ethBalance).toFixed(4);
+          
+          document.getElementById("walletInfo").style.display = "block";
+          document.getElementById("connectButton").innerText = " Connected";
+          
+        } catch (err) {
+          console.error("MetaMask connection error:", err);
+          alert("Error connecting to MetaMask");
+        }
+      } else {
+        alert("MetaMask is not installed. Please install the browser extension.");
+      }
+    }
+
+    // Create and list NFT
+    document.getElementById("uploadForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      
+      if (!currentAccount) {
+        alert("Please connect MetaMask first");
+        return;
+      }
+
+      const formData = new FormData(e.target);
+      const price = document.getElementById("nftPrice").value;
+      
+      try {
+        // Upload image
+        const uploadRes = await fetch("/upload", { 
+          method: "POST", 
+          body: formData 
+        });
+        const uploadData = await uploadRes.json();
+        
+        if (!uploadData.success) {
+          throw new Error(uploadData.error);
+        }
+
+        // Mint NFT
+        const nftContract = new ethers.Contract(nftAddress, NFT_ABI, signer);
+        const mintTx = await nftContract.mint(uploadData.imageUrl);
+        await mintTx.wait();
+        
+        // Get the token ID that was just minted
+        const nextTokenId = await nftContract.nextTokenId();
+        const tokenId = nextTokenId.toNumber() - 1;
+        
+        // Approve marketplace to transfer the NFT
+        const approveTx = await nftContract.approve(marketAddress, tokenId);
+        await approveTx.wait();
+        
+        // List NFT on marketplace
+        const marketContract = new ethers.Contract(marketAddress, MARKETPLACE_ABI, signer);
+        const priceInWei = ethers.utils.parseEther(price);
+        const listTx = await marketContract.listNFT(nftAddress, tokenId, priceInWei);
+        await listTx.wait();
+        
+        document.getElementById("create-message").innerHTML = '<div class="success">NFT created and listed successfully!</div>';
+        document.getElementById("create-preview").src = uploadData.imageUrl;
+        document.getElementById("create-preview").style.display = "block";
+        
+      } catch (error) {
+        console.error("Error creating NFT:", error);
+        document.getElementById("create-message").innerHTML = `<div class="error">Error: ${error.message}</div>`;
+      }
+    });
+
+    // Load marketplace
+    async function loadMarket() {
+      if (!provider) {
+        alert("Please connect MetaMask first");
+        return;
+      }
+
+      try {
+        const marketContract = new ethers.Contract(marketAddress, MARKETPLACE_ABI, provider);
+        const listings = await marketContract.getAllListings();
+        
+        const container = document.getElementById("market-list");
+        container.innerHTML = "";
+        
+        if (listings.length === 0) {
+          container.innerHTML = "<p>No NFTs available</p>";
+          return;
+        }
+
+        for (let i = 0; i < listings.length; i++) {
+          const listing = listings[i];
+          if (listing.sold) continue;
+          
+          try {
+            const nftContract = new ethers.Contract(nftAddress, NFT_ABI, provider);
+            const tokenURI = await nftContract.tokenURI(listing.tokenId);
+            const priceInEth = ethers.utils.formatEther(listing.price);
+            
+            const div = document.createElement("div");
+            div.className = "nft-card";
+            div.innerHTML = `
+              <img src="${tokenURI}" alt="NFT ${listing.tokenId}" />
+              <p><strong>Token ID:</strong> ${listing.tokenId}</p>
+              <p><strong>Price:</strong> ${priceInEth} ETH</p>
+              <p><strong>Seller:</strong> ${listing.seller}</p>
+              <button onclick="buyNFT(${i})">Buy NFT</button>
+            `;
+            container.appendChild(div);
+          } catch (error) {
+            console.error("Error loading NFT details:", error);
+          }
+        }
+      } catch (error) {
+        console.error("Error loading market:", error);
+        document.getElementById("market-list").innerHTML = `<div class="error">Error loading marketplace: ${error.message}</div>`;
+      }
+    }
+
+    // Buy NFT
+    async function buyNFT(listingId) {
+      if (!currentAccount) {
+        alert("Please connect MetaMask first");
+        return;
+      }
+
+      try {
+        const marketContract = new ethers.Contract(marketAddress, MARKETPLACE_ABI, signer);
+        const listing = await marketContract.getListing(listingId);
+        
+        const tx = await marketContract.buyNFT(listingId, {
+          value: listing.price
+        });
+        await tx.wait();
+        
+        alert("NFT purchased successfully!");
+        loadMarket();
+        
+      } catch (error) {
+        console.error("Error buying NFT:", error);
+        alert("Error buying NFT: " + error.message);
+      }
+    }
+
+    // Load owned NFTs
+    async function loadOwned() {
+      if (!currentAccount) {
+        alert("Please connect MetaMask first");
+        return;
+      }
+
+      try {
+        const marketContract = new ethers.Contract(marketAddress, MARKETPLACE_ABI, signer);
+        const purchasedIds = await marketContract.getMyPurchases();
+        
+        const container = document.getElementById("owned-list");
+        container.innerHTML = "";
+        
+        if (purchasedIds.length === 0) {
+          container.innerHTML = "<p>You don't own any NFTs yet</p>";
+          return;
+        }
+
+        for (let i = 0; i < purchasedIds.length; i++) {
+          try {
+            const listingId = purchasedIds[i];
+            const listing = await marketContract.getListing(listingId);
+            const nftContract = new ethers.Contract(nftAddress, NFT_ABI, provider);
+            const tokenURI = await nftContract.tokenURI(listing.tokenId);
+            const priceInEth = ethers.utils.formatEther(listing.price);
+            
+            const div = document.createElement("div");
+            div.className = "nft-card";
+            div.innerHTML = `
+              <img src="${tokenURI}" alt="NFT ${listing.tokenId}" />
+              <p><strong>Token ID:</strong> ${listing.tokenId}</p>
+              <p><strong>Purchased for:</strong> ${priceInEth} ETH</p>
+            `;
+            container.appendChild(div);
+          } catch (error) {
+            console.error("Error loading owned NFT:", error);
+          }
+        }
+      } catch (error) {
+        console.error("Error loading owned NFTs:", error);
+        document.getElementById("owned-list").innerHTML = `<div class="error">Error loading your NFTs: ${error.message}</div>`;
+      }
+    }
+
+    // Initialize
+    document.getElementById("connectButton").addEventListener("click", connectMetaMask);
+    
+    // Load contract addresses on page load
+    loadAddresses();
+  </script>
 </body>
 </html>

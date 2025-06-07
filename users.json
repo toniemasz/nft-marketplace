@@ -46,6 +46,13 @@
       "privateKey": "0xfc7cdf9ec5ad4e73f95c4a1a451576c26076a8d263535fb84661a96e2dc2c067",
       "balance": 10000,
       "ownedNFTs": []
+    },
+    {
+      "id": "hubert",
+      "address": "0x2650f60f4a93727199afd490bb2e98fc9dfc5f3b",
+      "privateKey": "0xdc36774ed2b31a3ff4e2ced0a49517789a322ebac8987c1ed4ad6b0ad125f4d2",
+      "balance": 10000,
+      "ownedNFTs": []
     }
   ]
 }
