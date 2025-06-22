@@ -1,7 +1,7 @@
-# 🖼 NFT Marketplace (Node.js + Solidity, bez MetaMask)
+# 🖼 NFT Marketplace (Node.js + Solidity, MetaMask)
 
 Prosty lokalny marketplace NFT zbudowany w Node.js i Solidity.  
-Pozwala wystawiać, kupować i przeglądać NFT **bez użycia MetaMask** – wszystkie transakcje realizowane są przez backend za pomocą lokalnego portfela.
+Pozwala wystawiać, kupować i przeglądać NFT ** tylko przy użyciu MetaMask** 
 
 ---
 
@@ -18,10 +18,12 @@ Pozwala wystawiać, kupować i przeglądać NFT **bez użycia MetaMask** – wsz
 ## ✨ Funkcje
 
 ✅ Wystawianie NFT (obraz JPG/PNG + cena)  
-✅ Kupowanie NFT (transakcja na blockchainie bez MetaMask)  
+✅ Kupowanie NFT  
 ✅ Przeglądanie dostępnych NFT  
-✅ Mój portfel – NFT przypisane do portfela backendu  
-✅ Historia zakupów z blockchaina (eventy `ItemPurchased`)  
+✅ Moja kolekcja – NFT przypisane do wybranego adresu
+✅ Odsprzedaż NFT 
+
+ 
 
 ---
 
@@ -38,6 +40,9 @@ cd nft-marketplace
 
 ```bash
 npm install
+npm init -y
+npm install express multer cors ethers
+npm install --save-dev hardhat @openzeppelin/contracts @nomicfoundation/hardhat-toolbox
 ```
 
 ### 3. Utworzenie pliku `.env`
@@ -82,8 +87,8 @@ Wejdź w przeglądarce na:
 
 - **Zakładka `Wystaw NFT`** – formularz do przesłania zdjęcia i podania ceny  
 - **Zakładka `Kup NFT`** – lista dostępnych tokenów z przyciskiem `Kup`  
-- **Zakładka `Mój portfel`** – pokazuje NFT należące do backendowego portfela  
-- **Zakładka `🧾 Historia`** – lista transakcji z datą, ceną i nabywcą
+- **Zakładka `Mója kolekcja`** – pokazuje NFT należące do danego adresu
+
 
 ---
 
@@ -106,7 +111,7 @@ nft-marketplace/
 ## 🛡️ Uwaga
 
 Ten projekt działa lokalnie – nie ma rejestracji użytkowników ani zabezpieczeń.  
-Nie używa MetaMask – transakcje są podpisywane automatycznie z backendu.
+
 
 Projekt idealny do nauki, prezentacji lub jako baza do dalszej rozbudowy.
 
