@@ -306,3 +306,6 @@ document.getElementById("uploadForm").addEventListener("submit", async (e) => {
     document.getElementById("create-message").innerText = "Błąd: " + error.message;
   }
 });
+
+
+

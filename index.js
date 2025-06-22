@@ -17,7 +17,7 @@ app.get("/", (req, res) => {
 
 app.use(express.json());
 
-// Contract addresses (update these with your deployed addresses)
+// Contract addresses 
 const contractAddresses = require('./contract-addresses.json');
 const NFT_ADDRESS = contractAddresses.MyNFT;
 const MARKETPLACE_ADDRESS = contractAddresses.NFTMarketplace;
@@ -81,8 +81,6 @@ app.post("/upload", upload.single("image"), async (req, res) => {
 // Get all NFTs from marketplace
 app.get("/nfts", async (req, res) => {
   try {
-    // This is a simplified version - in a real app you'd query the blockchain
-    // For now, return empty array - the frontend will handle blockchain calls
     res.json({ nfts: [] });
   } catch (error) {
     console.error("Error fetching NFTs:", error);
@@ -98,7 +96,7 @@ app.get("/addresses", (req, res) => {
   });
 });
 
-// New endpoint to handle resell requests (if you want to add server-side validation)
+// New endpoint to handle resell requests 
 app.post("/resell", async (req, res) => {
   try {
     const { userId, listingId, newPrice } = req.body;
@@ -117,8 +115,7 @@ app.post("/resell", async (req, res) => {
       });
     }
 
-    // In a real application, you might want to add additional validation here
-    // For now, we'll let the smart contract handle the validation
+
     res.json({
       success: true,
       message: "Resell request validated. Please complete the transaction in your wallet."
@@ -130,7 +127,7 @@ app.post("/resell", async (req, res) => {
   }
 });
 
-// Get user's owned NFTs (server-side helper - optional)
+// Get user's owned NFTs 
 app.get("/owned/:userAddress", async (req, res) => {
   try {
     const { userAddress } = req.params;
@@ -142,8 +139,7 @@ app.get("/owned/:userAddress", async (req, res) => {
       });
     }
 
-    // This would typically involve querying the blockchain
-    // For now, return a success response - the frontend handles blockchain calls
+
     res.json({
       success: true,
       message: "Use the frontend to load owned NFTs directly from the blockchain"
@@ -167,7 +163,7 @@ app.get("/health", (req, res) => {
   });
 });
 
-// ▶️ Start server
+//  Start server
 app.listen(3000, () => {
   console.log("Server running on http://localhost:3000");
   console.log("NFT Contract:", NFT_ADDRESS);
