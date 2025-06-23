@@ -1,0 +1,10 @@
+{
+  "user1": {
+    "address": "0xf39fd6e51aad88f6f4ce6ab8827279cfff92266",
+    "privateKey": "0x6c8754c5dcaa4d4199d06b9ab2599ffb75b8f3a2c135bf1ee97e3512403be3d5"
+  },
+  "user2": {
+    "address": "0xa5703ec0ffd347d9c81086938c1068a6ea0da256",
+    "privateKey": "0x4f3edf983ac636a65a842ce7c78d9aa706d3b113b37b6bc6a5081b8c4c4c77de"
+  }
+}
