@@ -1,4 +1,4 @@
-
+const fs = require('fs');
 const express = require("express");
 const multer = require("multer");
 const path = require("path");
@@ -44,7 +44,6 @@ const MARKETPLACE_ABI = [
   "event NFTSold(uint listingId, address buyer)",
   "event NFTRelisted(uint listingId, address seller, uint newPrice)"
 ];
-
 //  Multer - save to uploads directory
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, "uploads/"),
@@ -53,7 +52,25 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage });
 
-//  Upload file and mint NFT
+// Funkcja generująca JSON z metadanymi
+function generateMetadata(filename) {
+  const metadata = {
+    name: `NFT ${filename}`, // możesz spersonalizować nazwę
+    description: "Opis mojego NFT",
+    image: `http://localhost:3000/${filename}`
+  };
+
+  // Zmieniamy rozszerzenie pliku na .json
+  const jsonFilename = filename.replace(path.extname(filename), ".json");
+  const jsonPath = path.join(__dirname, "uploads", jsonFilename);
+
+  // Zapisujemy plik JSON
+  fs.writeFileSync(jsonPath, JSON.stringify(metadata, null, 2));
+
+  return `http://localhost:3000/${jsonFilename}`;
+}
+
+// Upload file and mint NFT (z generowaniem JSON)
 app.post("/upload", upload.single("image"), async (req, res) => {
   try {
     if (!req.file) {
@@ -66,11 +83,13 @@ app.post("/upload", upload.single("image"), async (req, res) => {
     }
 
     const imageUrl = `http://localhost:3000/${req.file.filename}`;
-   
+    const metadataUrl = generateMetadata(req.file.filename);
+
     res.json({
       success: true,
       imageUrl,
-      message: "File uploaded successfully. Use the frontend to mint NFT."
+      metadataUrl, // link do JSONa z metadanymi
+      message: "File uploaded successfully and metadata generated."
     });
   } catch (error) {
     console.error("Upload error:", error);
@@ -78,15 +97,6 @@ app.post("/upload", upload.single("image"), async (req, res) => {
   }
 });
 
-// Get all NFTs from marketplace
-app.get("/nfts", async (req, res) => {
-  try {
-    res.json({ nfts: [] });
-  } catch (error) {
-    console.error("Error fetching NFTs:", error);
-    res.status(500).json({ success: false, error: error.message });
-  }
-});
 
 // Get contract addresses
 app.get("/addresses", (req, res) => {
